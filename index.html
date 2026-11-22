@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AOJITA BREED SIM｜アオジタ ブリードシミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02070d; --bg2:#041322;
+  --cyan:#3ff3ff; --teal:#17d6c4; --cyan-d:rgba(63,243,255,.55); --cyan-f:rgba(63,243,255,.14);
+  --glass:rgba(8,36,54,.42); --glass2:rgba(6,22,36,.72);
+  --text:#d9fbff; --muted:#7fb3bf;
+  --yellow:#ffe14d; --orange:#ff9a2e; --red:#ff3b55; --pink:#ff6fd8; --green:#5dffa8;
+  --en:'Orbitron','Share Tech Mono',system-ui,sans-serif;
+  --mono:'Share Tech Mono',ui-monospace,monospace;
+  --ja:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',Meiryo,sans-serif;
+  --cut:12px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+html{background:#02070d}
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%,rgba(23,214,196,.18),transparent 60%),
+    radial-gradient(ellipse at 100% 100%,rgba(20,90,160,.22),transparent 55%),
+    linear-gradient(180deg,var(--bg2),var(--bg) 60%);
+  background-attachment:fixed;
+  color:var(--text);font-family:var(--ja);font-size:15px;line-height:1.55;min-height:100vh;
+  overflow-x:hidden;
+}
+/* grid + scanlines */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(63,243,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(63,243,255,.05) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 85%);-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 85%)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
+.scanbeam{position:fixed;left:0;right:0;height:120px;top:-120px;pointer-events:none;z-index:998;
+  background:linear-gradient(180deg,transparent,rgba(63,243,255,.06),transparent);animation:beam 7s linear infinite}
+@keyframes beam{to{top:110vh}}
+.bg-rings{position:fixed;right:-180px;bottom:-180px;width:560px;height:560px;opacity:.22;pointer-events:none;z-index:0}
+.bg-rings2{position:fixed;left:-220px;top:120px;width:440px;height:440px;opacity:.12;pointer-events:none;z-index:0}
+.spin{transform-origin:50% 50%;animation:spin 40s linear infinite}
+.spin-r{transform-origin:50% 50%;animation:spin 26s linear infinite reverse}
+.spin-f{transform-origin:50% 50%;animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.app{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.en{font-family:var(--en);letter-spacing:.08em}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+/* header */
+header.hud{display:flex;align-items:center;gap:14px;padding:10px 4px 14px;border-bottom:1px solid var(--cyan-f);position:relative}
+header.hud::after{content:"";position:absolute;left:0;bottom:-1px;width:180px;height:2px;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.logo{width:54px;height:54px;flex:0 0 auto;filter:drop-shadow(0 0 6px var(--cyan))}
+.title h1{margin:0;font-family:var(--en);font-weight:800;font-size:20px;letter-spacing:.16em;color:var(--cyan);text-shadow:0 0 12px rgba(63,243,255,.7)}
+.title .sub{font-size:12px;color:var(--muted);letter-spacing:.1em}
+.hud-stat{margin-left:auto;display:flex;gap:16px;font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.hud-stat b{display:block;font-family:var(--en);color:var(--cyan);font-size:16px}
+
+/* tabs */
+nav.tabs{display:flex;gap:10px;margin:14px 0 18px}
+.tab{flex:1;position:relative;background:var(--glass);border:1px solid var(--cyan-d);color:var(--muted);padding:12px 10px;cursor:pointer;
+  font-family:var(--en);letter-spacing:.12em;font-size:13px;text-align:center;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));transition:.2s}
+.tab .ja{display:block;font-family:var(--ja);letter-spacing:.04em;font-size:13px;margin-top:2px}
+.tab.active{color:#001014;background:linear-gradient(90deg,var(--teal),var(--cyan));box-shadow:0 0 24px rgba(63,243,255,.5)}
+.tab.active .ja{color:#00262c;font-weight:700}
+
+.view{display:none}.view.active{display:block;animation:viewIn .35s ease}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+
+/* panel */
+.panel{position:relative;background:linear-gradient(160deg,rgba(14,52,74,.45),rgba(4,18,30,.55));border:1px solid var(--cyan-d);
+  padding:16px;margin-bottom:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 0 0 1px rgba(63,243,255,.06) inset,0 10px 40px rgba(0,0,0,.5),0 0 18px rgba(63,243,255,.12)}
+.panel::before,.panel::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--cyan);pointer-events:none;filter:drop-shadow(0 0 4px var(--cyan))}
+.panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+.panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+.panel-h{display:flex;align-items:center;gap:10px;margin:-2px 0 12px;flex-wrap:wrap}
+.panel-h h2{margin:0;font-family:var(--en);font-size:14px;letter-spacing:.16em;color:var(--cyan)}
+.panel-h h2 .ja{font-family:var(--ja);letter-spacing:.04em;color:var(--text);font-size:14px;margin-left:8px}
+.panel-h .tick{width:8px;height:8px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:rotate(45deg)}
+.panel-h .grow{flex:1}
+
+/* buttons/inputs */
+.btn{appearance:none;border:1px solid var(--cyan-d);background:rgba(63,243,255,.08);color:var(--cyan);padding:10px 16px;min-height:42px;
+  font-family:var(--ja);font-size:14px;cursor:pointer;letter-spacing:.04em;transition:.15s;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn:hover{background:rgba(63,243,255,.18);box-shadow:0 0 14px rgba(63,243,255,.35)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(90deg,var(--teal),var(--cyan));color:#00161b;font-weight:700;border-color:var(--cyan)}
+.btn.danger{color:var(--red);border-color:rgba(255,59,85,.6);background:rgba(255,59,85,.08)}
+.btn.small{padding:6px 10px;min-height:34px;font-size:13px}
+.btn:disabled{opacity:.35;pointer-events:none}
+.btn .en{font-size:12px}
+label.f{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em}
+input[type=text],input[type=number],input[type=search],select,textarea{
+  width:100%;background:rgba(0,12,20,.7);border:1px solid rgba(63,243,255,.35);color:var(--text);padding:10px 12px;font-size:16px;font-family:var(--ja);border-radius:0;outline:none;min-height:44px}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 12px rgba(63,243,255,.35)}
+select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--cyan) 50%),linear-gradient(135deg,var(--cyan) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+select option{background:#04121e}
+textarea{min-height:70px;resize:vertical}
+.row{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px}
+.chk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px}
+.chk input{width:22px;height:22px;accent-color:var(--cyan)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar input,.toolbar select{flex:1;min-width:140px}
+.subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.subtab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 12px;font-size:14px;cursor:pointer;font-family:var(--ja)}
+.subtab.active{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 8px rgba(63,243,255,.6)}
+.subview{display:none}.subview.active{display:block}
+
+/* tags */
+.tag{max-width:100%;overflow-wrap:anywhere;display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border:1px solid currentColor;margin:2px 3px 2px 0;line-height:1.5}
+.tag.vis{color:var(--cyan);background:rgba(63,243,255,.1)}
+.tag.super{color:var(--pink);background:rgba(255,111,216,.1)}
+.tag.het{color:var(--teal);border-style:dashed}
+.tag.phet{color:var(--yellow);border-style:dotted}
+.tag.normal{color:var(--muted);opacity:.8}
+.tag.sample{color:#ffcf6e;border-color:#ffcf6e;background:rgba(255,207,110,.1)}
+.tag.flag{color:var(--orange);background:rgba(255,154,46,.12)}
+.tag.mode{color:#9fd8ff;border-color:rgba(159,216,255,.45)}
+
+/* holo card */
+.cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.holo{position:relative;cursor:pointer;padding:14px 14px 12px;min-height:170px;
+  background:linear-gradient(165deg,rgba(63,243,255,.13),rgba(10,40,60,.28) 40%,rgba(3,14,24,.6));
+  border:1px solid var(--cyan-d);
+  box-shadow:0 0 14px rgba(63,243,255,.25),0 0 1px var(--cyan) inset,0 24px 30px -18px rgba(63,243,255,.35);
+  transition:transform .25s,box-shadow .25s;animation:float 6s ease-in-out infinite;overflow:hidden}
+.holo:nth-child(2n){animation-delay:-2s}.holo:nth-child(3n){animation-delay:-4s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.holo:hover{box-shadow:0 0 24px rgba(63,243,255,.5),0 0 1px var(--cyan) inset,0 30px 34px -18px rgba(63,243,255,.5)}
+.holo::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(63,243,255,.07) 0 1px,transparent 1px 4px);opacity:.7}
+.holo::after{content:"";position:absolute;left:-40%;top:0;width:40%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.09),transparent);animation:sheen 5s ease-in-out infinite}
+@keyframes sheen{0%,60%{left:-40%}100%{left:120%}}
+.holo .corner{position:absolute;width:14px;height:14px;border:2px solid var(--cyan);filter:drop-shadow(0 0 3px var(--cyan))}
+.holo .c1{left:4px;top:4px;border-right:0;border-bottom:0}.holo .c2{right:4px;top:4px;border-left:0;border-bottom:0}
+.holo .c3{left:4px;bottom:4px;border-right:0;border-top:0}.holo .c4{right:4px;bottom:4px;border-left:0;border-top:0}
+.holo .hid{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em}
+.holo .nm{padding-right:38px;font-size:17px;font-weight:700;margin:2px 0 2px;color:#eaffff;text-shadow:0 0 8px rgba(63,243,255,.5);word-break:break-all}
+.holo .sp{font-size:12px;color:var(--teal)}
+.holo .genes{margin-top:8px;position:relative}
+.holo .meta{display:flex;gap:6px;text-align:right;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.sex{position:absolute;right:12px;top:10px;width:34px;height:34px;display:grid;place-items:center;border:1px solid currentColor;border-radius:50%;font-family:var(--en);font-size:15px}
+.sex.M{color:#58b6ff;box-shadow:0 0 10px rgba(88,182,255,.5)}
+.sex.F{color:var(--pink);box-shadow:0 0 10px rgba(255,111,216,.5)}
+.sex.U{color:var(--muted)}
+.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--cyan-f)}
+
+/* ===== TAB2 ===== */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr);gap:14px;align-items:center}
+.slot{position:relative;min-height:230px;border:1px dashed var(--cyan-d);background:rgba(0,20,32,.35);display:flex;flex-direction:column;cursor:pointer;transition:.2s}
+.slot .slot-h{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-family:var(--en);font-size:12px;letter-spacing:.2em;color:var(--cyan);border-bottom:1px solid var(--cyan-f)}
+.slot.sire .slot-h{color:#7cc6ff}.slot.dam .slot-h{color:#ff9ce4}
+.slot .slot-b{flex:1;display:flex;align-items:center;justify-content:center;padding:12px}
+.slot .slot-b .holo{width:100%;animation:none;cursor:default}
+.slot .ph{text-align:center;color:var(--muted);font-size:13px}
+.slot .ph svg{width:70px;height:70px;opacity:.6;display:block;margin:0 auto 8px}
+.slot.over{border-style:solid;border-color:var(--cyan);box-shadow:0 0 30px rgba(63,243,255,.5) inset,0 0 20px rgba(63,243,255,.4)}
+.slot.filled{border-style:solid}
+.slot .clr{white-space:nowrap;background:transparent;border:1px solid var(--cyan-f);color:var(--muted);font-size:12px;padding:2px 8px;cursor:pointer}
+.reactor{position:relative;width:150px;height:150px;margin:0 auto}
+.reactor svg{width:100%;height:100%}
+.reactor .x{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--en);font-size:26px;color:var(--cyan);text-shadow:0 0 12px var(--cyan)}
+.reactor.on svg{filter:drop-shadow(0 0 10px var(--cyan))}
+.reactor.on .spin-f{animation-duration:2.2s}
+.reactor .st{position:absolute;left:0;right:0;bottom:-22px;text-align:center;font-family:var(--en);font-size:10px;letter-spacing:.2em;color:var(--muted)}
+.reactor.on .st{color:var(--cyan)}
+
+.dock{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.mini{flex:0 0 160px;scroll-snap-align:start;position:relative;padding:10px 10px 8px;border:1px solid var(--cyan-d);
+  background:linear-gradient(165deg,rgba(63,243,255,.12),rgba(3,14,24,.6));cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  box-shadow:0 0 10px rgba(63,243,255,.2)}
+.mini .nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px}
+.mini .sx{position:absolute;right:8px;top:8px;font-family:var(--en);font-size:13px}
+.mini .sx.M{color:#58b6ff}.mini .sx.F{color:var(--pink)}.mini .sx.U{color:var(--muted)}
+.mini .g{font-size:11px;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini.inuse{opacity:.45}
+.mini.lifted{opacity:.3}
+.ghost{position:fixed;z-index:2000;pointer-events:none;width:160px;transform:translate(-50%,-60%) rotate(-3deg) scale(1.05);opacity:.92;box-shadow:0 0 30px rgba(63,243,255,.7)}
+.hint{font-size:12px;color:var(--muted)}
+
+/* alert */
+.alert{transition:.3s}
+.alert .lvl{display:flex;align-items:center;gap:14px}
+.alert .gauge{width:84px;height:84px;flex:0 0 auto}
+.alert .lvl-name{font-family:var(--en);font-size:18px;letter-spacing:.18em}
+.alert .lvl-ja{font-size:15px;font-weight:700}
+.alert .fval{font-family:var(--en);font-size:28px}
+.alert ul{margin:10px 0 0;padding-left:18px;font-size:13px}
+.alert li{margin:3px 0}
+.lv-safe{--lc:var(--cyan)}
+.lv-caution{--lc:var(--yellow)}
+.lv-warn{--lc:var(--orange)}
+.lv-danger{--lc:var(--red)}
+.lv-none{--lc:var(--muted)}
+.alert[class*="lv-"]{border-color:var(--lc)}
+.alert[class*="lv-"] .lvl-name,.alert[class*="lv-"] .fval{color:var(--lc);text-shadow:0 0 12px var(--lc)}
+.alert.lv-caution,.alert.lv-warn,.alert.lv-danger{box-shadow:0 0 26px color-mix(in srgb,var(--lc) 45%,transparent),0 0 40px color-mix(in srgb,var(--lc) 18%,transparent) inset}
+.alert[class*="lv-"]::before,.alert[class*="lv-"]::after{border-color:var(--lc);filter:drop-shadow(0 0 4px var(--lc))}
+.alert.lv-danger{animation:blink 1s steps(2,start) infinite, pulseR 1s ease-in-out infinite}
+@keyframes blink{50%{border-color:rgba(255,59,85,.25)}}
+@keyframes pulseR{0%,100%{box-shadow:0 0 34px rgba(255,59,85,.7),0 0 50px rgba(255,59,85,.25) inset}50%{box-shadow:0 0 8px rgba(255,59,85,.2),0 0 10px rgba(255,59,85,.05) inset}}
+.alert.lv-danger .lvl-name{animation:txtblink .8s steps(2,start) infinite}
+@keyframes txtblink{50%{opacity:.25}}
+.cautionp{border-color:var(--orange);box-shadow:0 0 22px rgba(255,154,46,.45)}
+.cautionp::before,.cautionp::after{border-color:var(--orange)}
+.cautionp h2{color:var(--orange)!important}
+
+/* gene analysis */
+.gene-list{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.gbox{border:1px solid var(--cyan-f);padding:10px 12px;background:rgba(0,16,26,.5)}
+.gbox h3{margin:0 0 6px;font-size:14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.gbox .pp{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px}
+.pun{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:4px 0 8px}
+.pun td,.pun th{border:1px solid rgba(63,243,255,.3);padding:4px 8px;text-align:center;min-width:44px}
+.pun th{color:var(--muted);font-weight:normal}
+.bar{display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0}
+.bar .lab{width:110px;flex:0 0 auto}
+.bar .trk{flex:1;height:8px;background:rgba(63,243,255,.08);position:relative}
+.bar .trk i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--teal),var(--cyan));box-shadow:0 0 8px var(--cyan)}
+.bar .pc{width:52px;text-align:right;font-family:var(--mono)}
+.note{font-size:12px;color:var(--yellow);margin-top:6px;border-left:2px solid var(--yellow);padding-left:8px}
+
+/* controls */
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;border:1px solid var(--cyan-d)}
+.seg button{background:transparent;border:none;color:var(--muted);font-family:var(--en);font-size:15px;padding:10px 16px;min-height:44px;cursor:pointer;min-width:58px}
+.seg button+button{border-left:1px solid var(--cyan-f)}
+.seg button.on{background:var(--cyan-f);color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+.btn.run{font-family:var(--en);letter-spacing:.14em;font-size:14px;padding:12px 22px}
+
+/* offspring */
+.kids{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.kid{min-height:150px;padding:12px 12px 10px;animation:materialize .7s cubic-bezier(.2,.9,.3,1.2) both, float 6s ease-in-out .8s infinite}
+.kid .no{padding-right:34px;font-family:var(--en);font-size:11px;color:var(--muted);letter-spacing:.15em}
+.kid .combo{font-size:15px;font-weight:700;margin:4px 0 6px;color:#effffe;text-shadow:0 0 8px rgba(63,243,255,.6);padding-right:36px;word-break:break-word}
+.kid .sex{width:28px;height:28px;font-size:13px;top:8px;right:8px}
+.kid .gl{flex-wrap:wrap;align-items:center;font-size:12px;display:flex;justify-content:space-between;gap:6px;border-top:1px solid rgba(63,243,255,.12);padding:3px 0}
+.kid .gl span:first-child{color:var(--muted);flex:1 1 90px;min-width:0}
+.kid.flagged{border-color:var(--orange);box-shadow:0 0 18px rgba(255,154,46,.55)}
+.kid.flagged .corner{border-color:var(--orange)}
+@keyframes materialize{
+  0%{opacity:0;transform:scale(.6,.02);filter:brightness(3)}
+  35%{opacity:1;transform:scale(1.04,.08)}
+  55%{transform:scale(1,1.02);opacity:.6}
+  70%{opacity:1}78%{opacity:.5}86%{opacity:1}
+  100%{transform:scale(1);filter:none}}
+
+/* summary */
+table.sum{width:100%;border-collapse:collapse;font-size:13px}
+table.sum th,table.sum td{padding:8px 6px;border-bottom:1px solid rgba(63,243,255,.12);text-align:left;vertical-align:middle}
+table.sum th{font-family:var(--en);font-size:10px;letter-spacing:.14em;color:var(--muted);font-weight:normal}
+table.sum td.n{text-align:right;font-family:var(--mono);white-space:nowrap}
+table.sum tr.zero td{opacity:.45}
+table.sum .mbar{height:6px;background:rgba(63,243,255,.08);position:relative;min-width:60px}
+table.sum .mbar i{position:absolute;left:0;top:0;bottom:0;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+table.sum .mbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+.legend{font-size:11px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:6px;background:var(--cyan);margin:0 4px 0 10px;vertical-align:middle}
+.legend b{display:inline-block;width:2px;height:10px;background:var(--yellow);margin:0 4px 0 10px;vertical-align:middle}
+
+/* master list */
+.mrow{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--cyan-f);margin-bottom:8px;background:rgba(0,16,26,.45);flex-wrap:wrap;cursor:pointer}
+.mrow .mn{font-weight:700;min-width:140px}
+.mrow .mnote{flex:1;font-size:12px;color:var(--muted);min-width:160px}
+.mrow.flag{border-color:rgba(255,154,46,.55)}
+
+/* gene editor rows in form */
+.grow-row{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:8px;align-items:end;padding:8px;border:1px solid var(--cyan-f);margin-bottom:8px;background:rgba(0,16,26,.4)}
+.grow-row .modeLbl{font-size:12px;color:#9fd8ff;padding-bottom:12px}
+.grow-row .x{min-height:44px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:1500;background:rgba(0,6,12,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) 12px 20px;overflow-y:auto}
+.modal.open{display:flex}
+.modal .panel{width:100%;max-width:720px;margin:auto 0;animation:mIn .3s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.96) translateY(10px)}}
+.modal .close{position:absolute;right:10px;top:8px;background:transparent;border:none;color:var(--cyan);font-size:26px;cursor:pointer;width:44px;height:44px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+.dl{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px}
+.dl dt{color:var(--muted);font-size:12px;padding-top:2px}
+.dl dd{margin:0}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);opacity:0;z-index:3000;
+  background:rgba(4,24,36,.95);border:1px solid var(--cyan);color:var(--cyan);padding:10px 18px;font-size:14px;box-shadow:0 0 20px rgba(63,243,255,.5);transition:.3s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.disclaimer{font-size:11px;color:var(--muted);margin-top:20px;text-align:center;line-height:1.7}
+
+@media (max-width:760px){
+  .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch}
+  .slot .slot-h{font-size:10px;letter-spacing:.1em;padding:6px 8px}
+  .slot .slot-b{padding:8px}
+  .slot .holo .meta span:last-child{display:none}
+  .kid{padding:10px}
+  .reactor{grid-column:1 / -1;grid-row:1;width:110px;height:110px}
+  .reactor{margin-bottom:22px}
+  .reactor .st{bottom:-20px;font-size:9px;letter-spacing:.12em;white-space:nowrap;left:-60px;right:-60px}
+  .slot .holo .sex{width:26px;height:26px;font-size:12px;right:8px;top:8px}
+  .slot .holo .hid,.slot .holo .nm{padding-right:28px}
+  .tab{font-size:10px;padding:10px 6px}.tab .ja{font-size:12px}
+  .slot{min-height:190px}
+  .slot .holo{padding:10px;min-height:140px}
+  .slot .holo .nm{font-size:14px}
+  .hud-stat{display:none}
+  .title h1{font-size:15px}
+  .grow-row{grid-template-columns:1fr 1fr}
+  .grow-row .modeLbl{grid-column:1 / -1;padding:0}
+  .kids{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kid .combo{font-size:13px}
+  .dl{grid-template-columns:90px 1fr}
+  .cards{grid-template-columns:1fr 1fr;gap:10px}
+  .holo .nm{font-size:15px}
+  .bar .lab{width:90px}
+}
+@media (max-width:420px){.cards{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="scanbeam"></div>
+<svg class="bg-rings" viewBox="0 0 200 200" aria-hidden="true">
+  <g fill="none" stroke="#3ff3ff">
+    <circle cx="100" cy="100" r="96" stroke-width=".4"/>
+    <g class="spin"><circle cx="100" cy="100" r="86" stroke-width="2" stroke-dasharray="40 14 4 14"/></g>
+    <g class="spin-r"><circle cx="100" cy="100" r="72" stroke-width=".8" stroke-dasharray="2 4"/></g>
+    <g class="spin"><path d="M100 40 A60 60 0 0 1 160 100" stroke-width="5"/><path d="M100 160 A60 60 0 0 1 40 100" stroke-width="5"/></g>
+    <circle cx="100" cy="100" r="44" stroke-width=".6"/>
+  </g>
+</svg>
+<svg class="bg-rings2" viewBox="0 0 200 200" aria-hidden="true">
+  <g fill="none" stroke="#17d6c4">
+    <g class="spin-r"><circle cx="100" cy="100" r="90" stroke-width="1" stroke-dasharray="60 20"/></g>
+    <g class="spin"><circle cx="100" cy="100" r="70" stroke-width="3" stroke-dasharray="6 10"/></g>
+  </g>
+</svg>
+
+<div class="app">
+  <header class="hud">
+    <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+      <g fill="none" stroke="#3ff3ff">
+        <circle cx="50" cy="50" r="46" stroke-width="1"/>
+        <g class="spin-f"><path d="M50 8 A42 42 0 0 1 92 50" stroke-width="4"/><path d="M50 92 A42 42 0 0 1 8 50" stroke-width="4"/></g>
+        <g class="spin-r"><circle cx="50" cy="50" r="33" stroke-width="1.4" stroke-dasharray="3 5"/></g>
+        <circle cx="50" cy="50" r="18" stroke-width="2"/>
+        <circle cx="50" cy="50" r="7" fill="#3ff3ff"/>
+      </g>
+    </svg>
+    <div class="title">
+      <h1>AOJITA BREED SIM</h1>
+      <div class="sub">アオジタトカゲ ブリードシミュレーター</div>
+    </div>
+    <div class="hud-stat">
+      <div>SPECIMENS<b id="stA">0</b></div>
+      <div>MORPHS<b id="stM">0</b></div>
+      <div>SYSTEM TIME<b id="clock">--:--</b></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="db"><span class="en">TAB 01 / DATABASE</span><span class="ja">親個体データベース</span></button>
+    <button class="tab" data-tab="sim"><span class="en">TAB 02 / SIMULATION</span><span class="ja">ブリードシミュレーション</span></button>
+  </nav>
+
+  <!-- ============ TAB1 ============ -->
+  <section class="view active" id="view-db">
+    <div class="subtabs">
+      <button class="subtab active" data-sub="animals">個体一覧</button>
+      <button class="subtab" data-sub="master">遺伝子マスタ</button>
+      <button class="subtab" data-sub="data">データ管理</button>
+    </div>
+
+    <div class="subview active" id="sub-animals">
+      <div class="panel">
+        <div class="panel-h"><span class="tick"></span><h2>SPECIMEN DATABASE<span class="ja">個体一覧</span></h2><span class="grow"></span>
+          <button class="btn primary" id="btnNewAnimal">＋ 個体を登録</button></div>
+        <div class="toolbar">
+          <input type="search" id="q" placeholder="名前・ライン・モルフで検索">
+          <select id="fSpecies"><option value="">すべての種類</option></select>
+          <select id="fSex"><option value="">すべての性別</option><option value="M">オス</option><option value="F">メス</option><option value="U">不明</option></select>
+        </div>
+        <div class="cards" id="animalCards"></div>
+      </div>
+    </div>
+
+    <div class="subview" id="sub-master">
+      <div class="panel">
+        <div class="panel-h"><span class="tick"></span><h2>GENE MASTER<span class="ja">遺伝子マスタ</span></h2><span class="grow"></span>
+          <button class="btn primary" id="btnNewMorph">＋ モルフを追加</button></div>
+        <p class="small muted" style="margin-top:0">モルフ名・遺伝形式・注意メモを自由に登録・編集できます。遺伝形式はここで設定した内容がすべての個体と計算に使われます。最初から入っている実在モルフは、出典で遺伝形式が明記されていたものだけ「劣性」「不完全優性」などを設定し、はっきりしないものは<b style="color:var(--yellow)">未確認</b>、ライン系は<b style="color:var(--yellow)">ポリジェニック／ライン</b>にしています（この2つはメンデル計算の対象外）。各モルフの出典はタップで確認できます。情報が分かったら自由に編集してください。</p>
+        <div id="morphList"></div>
+      </div>
+    </div>
+
+    <div class="subview" id="sub-data">
+      <div class="panel">
+        <div class="panel-h"><span class="tick"></span><h2>DATA CONTROL<span class="ja">データ管理</span></h2></div>
+        <p class="small muted" style="margin-top:0">データはこの端末のブラウザ（localStorage）に保存されています。機種変更や別端末へ移すときはJSONで書き出し・読み込みしてください。</p>
+        <div class="btns" style="justify-content:flex-start">
+          <button class="btn" id="btnExport">JSONを書き出し</button>
+          <button class="btn" id="btnImport">JSONを読み込み</button>
+          <input type="file" id="fileImport" accept="application/json,.json" hidden>
+          <button class="btn" id="btnLoadSample">サンプルを追加</button>
+          <button class="btn danger" id="btnDelSample">サンプルを削除</button>
+          <button class="btn danger" id="btnReset">全データを初期化</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB2 ============ -->
+  <section class="view" id="view-sim">
+    <div class="panel">
+      <div class="panel-h"><span class="tick"></span><h2>PAIRING CHAMBER<span class="ja">ペアリング</span></h2></div>
+      <div class="stage">
+        <div class="slot sire" id="slotSire" data-slot="sire">
+          <div class="slot-h"><span>SIRE ／ 父</span><button class="clr" data-clear="sire">解除</button></div>
+          <div class="slot-b"></div>
+        </div>
+        <div class="reactor" id="reactor">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#3ff3ff">
+            <circle cx="50" cy="50" r="47" stroke-width=".5"/>
+            <g class="spin-f"><circle cx="50" cy="50" r="42" stroke-width="2.4" stroke-dasharray="22 8 3 8"/></g>
+            <g class="spin-r"><circle cx="50" cy="50" r="34" stroke-width="1" stroke-dasharray="1.5 3"/></g>
+            <g class="spin"><path d="M50 22 A28 28 0 0 1 78 50" stroke-width="3.5"/><path d="M50 78 A28 28 0 0 1 22 50" stroke-width="3.5"/></g>
+            <circle cx="50" cy="50" r="17" stroke-width="1"/>
+          </g></svg>
+          <div class="x">×</div>
+          <div class="st" id="reactorSt">STANDBY</div>
+        </div>
+        <div class="slot dam" id="slotDam" data-slot="dam">
+          <div class="slot-h"><span>DAM ／ 母</span><button class="clr" data-clear="dam">解除</button></div>
+          <div class="slot-b"></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <div class="hint">▼ 個体カードをタップでセット（オス→父／メス→母）。長押ししてスロットへドラッグもできます。スロットをタップすると一覧から選べます。</div>
+        <div class="dock" id="dock"></div>
+      </div>
+    </div>
+
+    <div id="pairInfo"></div>
+
+    <div class="panel" id="runPanel">
+      <div class="panel-h"><span class="tick"></span><h2>SIMULATION<span class="ja">シミュレーション実行</span></h2></div>
+      <div class="controls">
+        <span class="small muted">子の数</span>
+        <div class="seg" id="segCount"><button data-n="10">10</button><button data-n="12">12</button><button data-n="16">16</button></div>
+        <button class="btn primary run" id="btnRun">▶ RUN ／ 実行</button>
+        <button class="btn run" id="btnReroll" disabled>↻ REROLL ／ 再抽選</button>
+      </div>
+      <div id="runNote"></div>
+    </div>
+
+    <div class="panel" id="kidsPanel" style="display:none">
+      <div class="panel-h"><span class="tick"></span><h2>OFFSPRING PROJECTION<span class="ja">子の予測</span></h2><span class="grow"></span><span class="mono small muted" id="runId"></span></div>
+      <div class="kids" id="kids"></div>
+    </div>
+
+    <div class="panel" id="sumPanel" style="display:none">
+      <div class="panel-h"><span class="tick"></span><h2>ANALYSIS<span class="ja">集計（出現数と理論確率）</span></h2></div>
+      <div style="overflow-x:auto"><table class="sum" id="sumTable"></table></div>
+      <div class="legend">バー：<i></i>今回の出現率 <b></b>理論確率</div>
+    </div>
+
+    <p class="disclaimer">本アプリは単一遺伝子のメンデル遺伝モデルによる簡易シミュレーションです。モルフの遺伝形式は「遺伝子マスタ」に登録された内容に基づいて計算され、実際の遺伝を保証するものではありません。<br>近交係数はリンクされた血統情報からの簡易計算（共通祖先自身の近交は考慮しない）です。</p>
+  </section>
+</div>
+
+<div class="modal" id="modal"><div class="panel" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+'use strict';
+/* ================= constants ================= */
+const KEY='aojitaBreedSim.v1';
+const SPECIES=['キタアオジタ','ヒガシアオジタ','ニシアオジタ','マダラアオジタ','チュウオウアオジタ','メラウケアオジタ','ハルマヘラアオジタ','イリアンジャヤアオジタ','ケイアオジタ','その他'];
+const MODES={rec:'劣性',dom:'優性',codom:'共優性',incdom:'不完全優性',unknown:'未確認',poly:'ポリジェニック／ライン'};
+const CALC=m=>['rec','dom','codom','incdom'].includes(m);
+const SEX={M:'オス',F:'メス',U:'不明'};
+const SEXSYM={M:'♂',F:'♀',U:'?'};
+// 親の状態。copies=変異アレルのコピー数
+const STATES={
+  rec:   [['vis','ビジュアル（ホモ）'],['het','ヘテロ（保因）'],['phet','ポッシブルヘテロ'],['normal','ノーマル']],
+  other: [['vis','ビジュアル（ヘテロ体）'],['super','スーパー体（ホモ）'],['phet','ポッシブル（保持の可能性）'],['normal','ノーマル']],
+  unknown:[['vis','ビジュアル'],['het','ヘテロ／保有'],['phet','ポッシブル'],['normal','ノーマル']],
+  poly:  [['vis','表現あり'],['phet','可能性あり'],['normal','なし']]
+};
+const statesFor=m=>m==='rec'?STATES.rec:STATES[m]||STATES.other;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const pct=(x,d=1)=>(x*100).toFixed(d).replace(/\.0+$/,'')+'%';
+
+/* ================= state ================= */
+let S=load();
+function blank(){return {morphs:[],animals:[],seq:0,slots:{sire:null,dam:null},count:12,init:false}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.morphs&&d.animals)return Object.assign(blank(),d)}catch(e){}return blank()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('保存に失敗しました（容量不足の可能性）')}}
+const morph=id=>S.morphs.find(m=>m.id===id);
+const animal=id=>S.animals.find(a=>a.id===id);
+function nextCode(){S.seq=(S.seq||0)+1;return 'AJ-'+String(S.seq).padStart(4,'0')}
+
+/* ================= sample data ================= */
+const SRC_MM='MorphMarketコミュニティ「Blue Tongue Skinks traits」一覧（2021〜2023）';
+const SRC_RM='Reptile Mountain「On Morphs and the Australian Blue Tongue Skink in America」（2017／2019更新）';
+// 実在モルフの初期データ。遺伝形式は出典に明記があるものだけ設定し、それ以外は「未確認」または「ポリジェニック／ライン」。
+const PRESET_MORPHS=[
+  {name:'トゥルーハイポ',mode:'rec',src:SRC_RM+'／'+SRC_MM,note:'ノーザンのトゥルーハイポは「単純劣性と証明」と記載（Reptile Mountain）。ハイポを名乗るライン系（ポリジェニック）とは別物。'},
+  {name:'アルビノ（T-）',mode:'rec',src:SRC_MM,note:'劣性と記載。T+アルビノとは別の遺伝子として扱っています。'},
+  {name:'T+アルビノ',mode:'rec',src:SRC_MM,note:'劣性と記載。'},
+  {name:'ホワイトノーザン',mode:'rec',src:SRC_MM,note:'劣性と記載。'},
+  {name:'アネリ',mode:'rec',src:SRC_MM,note:'劣性と記載。'},
+  {name:'アザンティック',mode:'rec',src:SRC_MM,note:'劣性と記載。'},
+  {name:'パッチワーク',mode:'rec',src:SRC_MM,note:'劣性と記載。Joe Ball Blue Tonguesはホワイトサイドと「アレル（対立遺伝子）」と説明。本アプリは別遺伝子として計算するため、両方が絡む交配は結果を参考程度に。'},
+  {name:'ハイパーメラニスティック',mode:'incdom',src:SRC_MM,note:'不完全優性と記載。'},
+  {name:'パターンレス',mode:'incdom',src:SRC_MM+'／Joe Ball Blue Tongues「Base Morphs」',note:'不完全優性と記載（2出典）。'},
+  {name:'ホワイトサイド',mode:'incdom',src:SRC_MM,note:'不完全優性と記載。パッチワークとアレルとの説明あり（Joe Ball）。'},
+  {name:'キャラメル',mode:'unknown',src:SRC_MM+'／'+SRC_RM,note:'「遺伝の可能性あり（Possibly Genetic）」とされ遺伝形式は未確認。MorphMarketの更新履歴ではポリジェニック扱いの記載も。'},
+  {name:'T+キャラメル',mode:'unknown',src:SRC_MM+'／'+SRC_RM,note:'「遺伝の可能性あり」とされ遺伝形式は未確認。'},
+  {name:'ターナーホワイト',mode:'unknown',src:SRC_RM+'／'+SRC_MM,note:'「遺伝の可能性あり」の一方、ライン系（ポリジェニック）とする意見もあり未確認。'},
+  {name:'ヒガシ ハイポ',mode:'unknown',src:SRC_RM,note:'イースタンのハイポは「単純劣性であることを示す取り組み中」と記載。確定情報ではないため未確認。'},
+  {name:'サンセット',mode:'poly',src:SRC_RM+'／'+SRC_MM,note:'ポリジェニック（ライン系）と記載。'},
+  {name:'サンライズ',mode:'poly',src:SRC_RM,note:'ポリジェニックと記載。'},
+  {name:'フェンホワイト',mode:'poly',src:SRC_RM+'／'+SRC_MM,note:'ポリジェニック／ラインブレッドと記載。'},
+  {name:'ブラック＆グレー',mode:'poly',src:SRC_RM,note:'ポリジェニックと記載。'},
+  {name:'オレンジ',mode:'poly',src:SRC_RM,note:'ポリジェニックと記載。'},
+  {name:'レッド',mode:'poly',src:SRC_RM,note:'ポリジェニックと記載。'},
+  {name:'コーヒー',mode:'poly',src:SRC_RM,note:'ポリジェニックと記載。'},
+  {name:'マグマ',mode:'poly',src:SRC_MM,note:'ラインブレッド（ポリジェニック）と記載。'},
+  {name:'ピッチブラック',mode:'poly',src:'MorphMarket「Gene/Trait Updates」（2021年11月）',note:'ノーザンのポリジェニック形質として追加と記載。'},
+];
+function addPresetMorphs(){
+  PRESET_MORPHS.forEach(m=>{if(!S.morphs.some(x=>x.name===m.name))S.morphs.push({id:uid('m'),caution:false,sample:false,preset:true,...m})});
+}
+function addSamples(){
+  addPresetMorphs();
+  const id=n=>S.morphs.find(m=>m.name===n)?.id;
+  const ALB=id('アルビノ（T-）'),HYPER=id('ハイパーメラニスティック'),WN=id('ホワイトノーザン'),PL=id('パターンレス'),ANE=id('アネリ');
+  const g=(m,s,p)=>m?[{m,s,...(p?{p}:{})}]:[];
+  const mk=(name,sex,species,line,genes,year,sire=null,dam=null)=>{const a={id:uid('a'),code:nextCode(),name,sex,species,line,year,sireId:sire,damId:dam,genes:genes.flat(),sample:true,memo:'動作確認用のサンプル個体（架空）'};S.animals.push(a);return a};
+  const g1=mk('サンプル祖父オス','M','キタアオジタ','サンプルライン',[g(ALB,'vis'),g(HYPER,'vis')],'2019');
+  const g2=mk('サンプル祖母メス','F','キタアオジタ','サンプルライン',[g(ALB,'het')],'2019');
+  const s1=mk('サンプル兄オス','M','キタアオジタ','サンプルライン',[g(ALB,'het'),g(HYPER,'vis')],'2022',g1.id,g2.id);
+  mk('サンプル妹メス','F','キタアオジタ','サンプルライン',[g(ALB,'phet',66),g(HYPER,'vis')],'2022',g1.id,g2.id);
+  const o1=mk('サンプル外部メス','F','キタアオジタ','サンプル外部ライン',[g(WN,'het'),g(PL,'vis')],'2021');
+  mk('サンプル外部オス','M','キタアオジタ','',[g(ANE,'vis'),g(WN,'vis')],'2020');
+  mk('サンプル子メス','F','キタアオジタ','サンプル外部ライン',[g(ALB,'het'),g(WN,'phet',50)],'2024',s1.id,o1.id);
+}
+if(!S.init){addSamples();S.init=true;S.presetV=2;save()}
+else if((S.presetV||1)<2){
+  // 旧版（架空サンプルモルフ）からの移行：ユーザー登録が無ければ作り直し、あれば実在モルフを追加
+  const onlySample=S.animals.every(a=>a.sample)&&S.morphs.every(m=>m.sample);
+  if(onlySample){const keep={slots:{sire:null,dam:null},count:S.count};S=Object.assign(blank(),keep,{init:true});addSamples()}
+  else addPresetMorphs();
+  S.presetV=2;save();
+}
+
+/* ================= genetics ================= */
+function modeOf(mid){const m=morph(mid);return m?m.mode:'rec'}
+// 親の遺伝子型分布 {0:p,1:p,2:p}
+function parentDist(gene,mode){
+  if(!gene) return {0:1,1:0,2:0};
+  const p=Math.max(0,Math.min(100,+gene.p||50))/100;
+  if(mode==='rec'){
+    if(gene.s==='vis')return {0:0,1:0,2:1};
+    if(gene.s==='het')return {0:0,1:1,2:0};
+    if(gene.s==='phet')return {0:1-p,1:p,2:0};
+    return {0:1,1:0,2:0};
+  }else{
+    if(gene.s==='super')return {0:0,1:0,2:1};
+    if(gene.s==='vis'||gene.s==='het')return {0:0,1:1,2:0};
+    if(gene.s==='phet')return {0:1-p,1:p,2:0};
+    return {0:1,1:0,2:0};
+  }
+}
+function childDist(dA,dB){
+  const a=(dA[1]*.5+dA[2]), b=(dB[1]*.5+dB[2]);
+  return {0:(1-a)*(1-b),1:a*(1-b)+b*(1-a),2:a*b};
+}
+function stateOf(mode,k){
+  if(mode==='rec')return k===2?['vis','ビジュアル']:k===1?['het','ヘテロ']:['normal','ノーマル'];
+  if(mode==='dom')return k===2?['super','ビジュアル(ホモ)']:k===1?['vis','ビジュアル']:['normal','ノーマル'];
+  return k===2?['super','スーパー体']:k===1?['vis','ヘテロ体(ビジュアル)']:['normal','ノーマル'];
+}
+function genoStr(mode,k){const a=mode==='rec'?'m':'M';return k===2?a+'/'+a:k===1?'+/'+a:'+/+'}
+function geneOf(an,mid){return an.genes.find(g=>g.m===mid)}
+
+// 各遺伝子の解析
+function analyze(sire,dam){
+  const ids=[];
+  [...sire.genes,...dam.genes].forEach(g=>{if(g.s!=='normal'&&morph(g.m)&&CALC(morph(g.m).mode)&&!ids.includes(g.m))ids.push(g.m)});
+  return ids.map(mid=>{
+    const mode=modeOf(mid), gs=geneOf(sire,mid), gd=geneOf(dam,mid);
+    const ds=parentDist(gs,mode), dd=parentDist(gd,mode);
+    return {mid,mode,m:morph(mid),gs,gd,ds,dd,dist:childDist(ds,dd)};
+  });
+}
+// 子の表記：コンボ名
+function comboName(list){ // list: [{mid,mode,k}]
+  const vis=[],het=[];
+  list.forEach(({mid,mode,k})=>{
+    const n=morph(mid)?.name||'?';
+    if(k===0)return;
+    if(mode==='rec'){k===2?vis.push(n):het.push(n)}
+    else if(mode==='dom'){vis.push(k===2?n+'(ホモ)':n)}
+    else vis.push(k===2?'スーパー '+n:n);
+  });
+  let s=vis.join(' ');
+  if(het.length)s+=(s?' ':'')+het.map(h=>'het '+h).join(' ');
+  return s||'ノーマル';
+}
+// 全組み合わせの理論確率
+function theory(an){
+  let combos=[{list:[],p:1}];
+  if(an.length>9){ // 爆発防止: 9遺伝子超は確率上位のみ近似しない（サンプリング近似）
+    const map=new Map();const N=20000;
+    for(let i=0;i<N;i++){const l=an.map(g=>({mid:g.mid,mode:g.mode,k:pick(g.dist)}));const n=comboName(l);const e=map.get(n)||{name:n,p:0,list:l};e.p+=1/N;map.set(n,e)}
+    return [...map.values()].sort((a,b)=>b.p-a.p);
+  }
+  an.forEach(g=>{
+    const nx=[];
+    combos.forEach(c=>[0,1,2].forEach(k=>{const p=g.dist[k];if(p>1e-12)nx.push({list:[...c.list,{mid:g.mid,mode:g.mode,k}],p:c.p*p})}));
+    combos=nx;
+  });
+  const map=new Map();
+  combos.forEach(c=>{const n=comboName(c.list);const e=map.get(n);if(e)e.p+=c.p;else map.set(n,{name:n,p:c.p,list:c.list})});
+  return [...map.values()].sort((a,b)=>b.p-a.p);
+}
+function pick(dist){let r=Math.random(),acc=0;for(const k of [0,1,2]){acc+=dist[k];if(r<acc)return k}return dist[2]>0?2:dist[1]>0?1:0}
+
+// 注意フラグ判定
+function flaggedIn(list){
+  const f=list.filter(x=>x.k>0&&morph(x.mid)?.caution&&(x.mode==='rec'?x.k===2:true));
+  const homo=list.filter(x=>x.k===2&&x.mode!=='rec'&&morph(x.mid)?.caution);
+  return {hit:f.length>=2||homo.length>0,names:f.map(x=>morph(x.mid).name),homo:homo.map(x=>morph(x.mid).name)};
+}
+
+/* ================= inbreeding ================= */
+function paths(id,maxDepth=12){
+  const out=[];
+  (function walk(cur,path){
+    out.push({anc:cur,path});
+    if(path.length>maxDepth)return;
+    const a=animal(cur);if(!a)return;
+    [a.sireId,a.damId].forEach(p=>{if(p&&animal(p)&&!path.includes(p))walk(p,[...path,p])});
+  })(id,[id]);
+  return out;
+}
+function relName(n1,n2){
+  const k=[Math.min(n1,n2),Math.max(n1,n2)].join(',');
+  return ({'0,1':'親子','0,2':'祖父母×孫','0,3':'曾祖父母×曾孫','1,1':'兄弟姉妹（共通の親）','1,2':'おじ・おば×姪・甥','2,2':'いとこ','1,3':'大おじ・大おば系','2,3':'いとこ違い','3,3':'はとこ'})[k]||`${n1}世代×${n2}世代`;
+}
+function inbreeding(sire,dam){
+  const res={F:0,items:[],line:false,same:sire.id===dam.id};
+  if(res.same)return res;
+  const A=paths(sire.id),B=paths(dam.id);
+  const byAnc=new Map();
+  A.forEach(pa=>B.forEach(pb=>{
+    if(pa.anc!==pb.anc)return;
+    const setA=new Set(pa.path.slice(0,-1));
+    if(pb.path.slice(0,-1).some(x=>setA.has(x)))return; // 経路が祖先以外で交わる→除外
+    const n1=pa.path.length-1,n2=pb.path.length-1;
+    const c=Math.pow(.5,n1+n2+1);
+    res.F+=c;
+    const e=byAnc.get(pa.anc)||{anc:pa.anc,c:0,rel:[]};
+    e.c+=c;e.rel.push({n1,n2,c});byAnc.set(pa.anc,e);
+  }));
+  res.items=[...byAnc.values()].sort((a,b)=>b.c-a.c);
+  const l1=(sire.line||'').trim(),l2=(dam.line||'').trim();
+  res.line=!!l1&&l1===l2;
+  return res;
+}
+function level(F){
+  if(F>=.125)return {cls:'lv-danger',en:'DANGER',ja:'危険'};
+  if(F>=.0625)return {cls:'lv-warn',en:'WARNING',ja:'警告'};
+  if(F>=.03)return {cls:'lv-caution',en:'CAUTION',ja:'注意'};
+  return {cls:'lv-safe',en:'SAFE',ja:'安全'};
+}
+
+/* ================= UI helpers ================= */
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)}
+function openModal(html){$('#modalBody').innerHTML='<button class="close" data-close>×</button>'+html;$('#modal').classList.add('open');document.body.style.overflow='hidden'}
+function closeModal(){$('#modal').classList.remove('open');document.body.style.overflow=''}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.closest('[data-close]'))closeModal()});
+function confirmBox(msg,okLabel,cb,danger=true){
+  openModal(`<div class="panel-h"><span class="tick"></span><h2>CONFIRM<span class="ja">確認</span></h2></div><p>${msg}</p>
+  <div class="btns"><button class="btn" data-close>キャンセル</button><button class="btn ${danger?'danger':'primary'}" id="cfOk">${esc(okLabel)}</button></div>`);
+  $('#cfOk').onclick=()=>{closeModal();cb()};
+}
+function stateTag(mode,g){
+  const m=morph(g.m);if(!m)return '';
+  const n=esc(m.name);
+  if(g.s==='normal')return `<span class="tag normal">${n} ノーマル</span>`;
+  if(g.s==='phet')return `<span class="tag phet">${g.p||50}% ポッシブル${mode==='rec'?'het':''} ${n}</span>`;
+  if(mode==='unknown')return g.s==='vis'?`<span class="tag vis">${n}<small>（未確認）</small></span>`:`<span class="tag het">保有 ${n}<small>（未確認）</small></span>`;
+  if(mode==='poly')return `<span class="tag vis">${n}<small>（ライン）</small></span>`;
+  if(mode==='rec')return g.s==='vis'?`<span class="tag vis">${n}</span>`:`<span class="tag het">het ${n}</span>`;
+  if(g.s==='super')return `<span class="tag super">${mode==='dom'?n+'(ホモ)':'スーパー '+n}</span>`;
+  return `<span class="tag vis">${n}</span>`;
+}
+function animalVisualName(a){
+  const ex=a.genes.filter(g=>morph(g.m)&&!CALC(modeOf(g.m))&&g.s==='vis').map(g=>morph(g.m).name);
+  const l=a.genes.filter(g=>morph(g.m)&&CALC(modeOf(g.m))&&g.s!=='phet').map(g=>{const mode=modeOf(g.m);const k=g.s==='normal'?0:(mode==='rec'?(g.s==='vis'?2:1):(g.s==='super'?2:1));return {mid:g.m,mode,k}});
+  const c=comboName(l);return ex.length?(c==='ノーマル'?'':c+' ')+ex.join(' '):c;
+}
+function holoCard(a,extra=''){
+  const genes=a.genes.map(g=>stateTag(modeOf(g.m),g)).join('')||'<span class="tag normal">遺伝子未登録</span>';
+  return `<div class="holo" data-id="${a.id}" ${extra}>
+    <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+    <div class="sex ${a.sex}">${SEXSYM[a.sex]}</div>
+    <div class="hid">${esc(a.code)}${a.year?' ／ '+esc(a.year):''}</div>
+    <div class="nm">${esc(a.name)}</div>
+    <div class="sp">${esc(a.species)}${a.line?' ／ '+esc(a.line):''}</div>
+    <div class="genes">${genes}</div>
+    <div class="meta"><span>${a.sample?'<span class="tag sample">サンプル</span>':''}</span><span>${esc(animalVisualName(a))}</span></div>
+  </div>`;
+}
+
+/* ================= tabs ================= */
+$$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===b));$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+b.dataset.tab));if(b.dataset.tab==='sim')renderSim();window.scrollTo({top:0})});
+$$('.subtab').forEach(b=>b.onclick=()=>{$$('.subtab').forEach(x=>x.classList.toggle('active',x===b));$$('.subview').forEach(v=>v.classList.toggle('active',v.id==='sub-'+b.dataset.sub))});
+function gotoTab(t){$(`.tab[data-tab="${t}"]`).click()}
+
+/* ================= TAB1: list ================= */
+SPECIES.forEach(s=>$('#fSpecies').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+['#q','#fSpecies','#fSex'].forEach(s=>$(s).addEventListener('input',renderAnimals));
+function renderStats(){$('#stA').textContent=S.animals.length;$('#stM').textContent=S.morphs.length}
+function renderAnimals(){
+  const q=$('#q').value.trim().toLowerCase(),sp=$('#fSpecies').value,sx=$('#fSex').value;
+  const list=S.animals.filter(a=>{
+    if(sp&&a.species!==sp)return false;if(sx&&a.sex!==sx)return false;
+    if(q){const hay=[a.name,a.code,a.line,a.species,...a.genes.map(g=>morph(g.m)?.name)].join(' ').toLowerCase();if(!hay.includes(q))return false}
+    return true;
+  });
+  $('#animalCards').innerHTML=list.length?list.map(a=>holoCard(a)).join(''):'<div class="empty">個体がありません。「＋ 個体を登録」から追加してください。</div>';
+  renderStats();
+}
+$('#animalCards').addEventListener('click',e=>{const c=e.target.closest('.holo');if(c)showDetail(c.dataset.id)});
+$('#btnNewAnimal').onclick=()=>animalForm();
+
+function showDetail(id){
+  const a=animal(id);if(!a)return;
+  const par=x=>{const p=animal(x);return p?`${esc(p.code)} ${esc(p.name)}`:'<span class="muted">未登録</span>'};
+  const kids=S.animals.filter(k=>k.sireId===id||k.damId===id);
+  openModal(`<div class="panel-h"><span class="tick"></span><h2>SPECIMEN<span class="ja">個体詳細</span></h2></div>
+    <div style="max-width:340px;margin:0 auto 14px">${holoCard(a,'style="animation:none;cursor:default"')}</div>
+    <dl class="dl">
+      <dt>ID</dt><dd class="mono">${esc(a.code)}</dd>
+      <dt>名前</dt><dd>${esc(a.name)}</dd>
+      <dt>種類</dt><dd>${esc(a.species)}</dd>
+      <dt>性別</dt><dd>${SEX[a.sex]}</dd>
+      <dt>生年</dt><dd>${esc(a.year||'—')}</dd>
+      <dt>血統ライン</dt><dd>${esc(a.line||'—')}</dd>
+      <dt>父</dt><dd>${par(a.sireId)}</dd>
+      <dt>母</dt><dd>${par(a.damId)}</dd>
+      <dt>子（登録済）</dt><dd>${kids.length?kids.map(k=>esc(k.code+' '+k.name)).join('、'):'—'}</dd>
+      <dt>メモ</dt><dd>${esc(a.memo||'—')}</dd>
+    </dl>
+    <div class="btns">
+      <button class="btn danger" id="dDel">削除</button>
+      <button class="btn" id="dEdit">編集</button>
+      <button class="btn" id="dSire">父スロットへ</button>
+      <button class="btn primary" id="dDam">母スロットへ</button>
+    </div>`);
+  $('#dEdit').onclick=()=>animalForm(id);
+  $('#dDel').onclick=()=>confirmBox(`「${esc(a.name)}」を削除しますか？<br><span class="small muted">この個体を父・母に設定している個体の血統リンクも解除されます。</span>`,'削除する',()=>{
+    S.animals=S.animals.filter(x=>x.id!==id);
+    S.animals.forEach(x=>{if(x.sireId===id)x.sireId=null;if(x.damId===id)x.damId=null});
+    ['sire','dam'].forEach(k=>{if(S.slots[k]===id)S.slots[k]=null});
+    save();renderAnimals();toast('削除しました');
+  });
+  $('#dSire').onclick=()=>{setSlot('sire',id);closeModal();gotoTab('sim')};
+  $('#dDam').onclick=()=>{setSlot('dam',id);closeModal();gotoTab('sim')};
+}
+
+function descendants(id){const out=new Set();const st=[id];while(st.length){const c=st.pop();S.animals.forEach(a=>{if((a.sireId===c||a.damId===c)&&!out.has(a.id)){out.add(a.id);st.push(a.id)}})}return out}
+
+function animalForm(id,draft){
+  const a=draft?draft:id?JSON.parse(JSON.stringify(animal(id))):{name:'',species:SPECIES[0],sex:'U',year:'',line:'',sireId:null,damId:null,genes:[],memo:''};
+  const banned=id?descendants(id):new Set();if(id)banned.add(id);
+  const opt=(sexNot,sel)=>'<option value="">（未登録・不明）</option>'+S.animals.filter(x=>!banned.has(x.id)&&x.sex!==sexNot).map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.code+' '+x.name)}（${SEX[x.sex]}）</option>`).join('');
+  openModal(`<div class="panel-h"><span class="tick"></span><h2>${id?'EDIT':'REGISTER'}<span class="ja">${id?'個体を編集':'個体を登録'}</span></h2></div>
+    <div class="row"><div><label class="f">名前 *</label><input type="text" id="fName" value="${esc(a.name)}" placeholder="例：ソラ"></div>
+      <div><label class="f">種類</label><select id="fSp">${SPECIES.map(s=>`<option ${s===a.species?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="row"><div><label class="f">性別</label><select id="fSx">${Object.entries(SEX).map(([k,v])=>`<option value="${k}" ${k===a.sex?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div><label class="f">生年（任意）</label><input type="text" inputmode="numeric" id="fYr" value="${esc(a.year)}" placeholder="例：2024"></div>
+      <div><label class="f">血統ライン名</label><input type="text" id="fLine" value="${esc(a.line)}" placeholder="例：○○ライン"></div></div>
+    <div class="row"><div><label class="f">父ID</label><select id="fSire">${opt('F',a.sireId)}</select></div>
+      <div><label class="f">母ID</label><select id="fDam">${opt('M',a.damId)}</select></div></div>
+    <label class="f">遺伝子（複数登録可）</label>
+    <div id="geneRows"></div>
+    <div class="btns" style="justify-content:flex-start;margin:0 0 12px"><button class="btn small" id="addGene">＋ 遺伝子を追加</button><button class="btn small" id="quickMorph">＋ 新しいモルフをマスタに追加</button></div>
+    <label class="f">メモ</label><textarea id="fMemo">${esc(a.memo||'')}</textarea>
+    <div class="btns"><button class="btn" data-close>キャンセル</button><button class="btn primary" id="fSave">保存</button></div>`);
+  const rows=$('#geneRows');
+  const drawRows=()=>{
+    if(!S.morphs.length){rows.innerHTML='<div class="small muted" style="margin-bottom:8px">遺伝子マスタにモルフがありません。「新しいモルフをマスタに追加」から登録してください。</div>';return}
+    rows.innerHTML=a.genes.map((g,i)=>{
+      const m=morph(g.m)||S.morphs[0];g.m=m.id;
+      const st=statesFor(m.mode);
+      if(!st.some(x=>x[0]===g.s))g.s=st[0][0];
+      return `<div class="grow-row" data-i="${i}">
+        <div><label class="f">モルフ名</label><select data-k="m">${S.morphs.map(x=>`<option value="${x.id}" ${x.id===g.m?'selected':''}>${esc(x.name)}${x.sample?'（サンプル）':''}</option>`).join('')}</select></div>
+        <div><label class="f">状態</label><select data-k="s">${st.map(([k,v])=>`<option value="${k}" ${k===g.s?'selected':''}>${v}</option>`).join('')}</select></div>
+        <div>${g.s==='phet'?`<label class="f">保持確率</label><select data-k="p">${[50,66,25,33,75].map(v=>`<option value="${v}" ${+g.p===v?'selected':''}>${v}%</option>`).join('')}</select>`:`<div class="modeLbl">遺伝形式：${MODES[m.mode]}</div>`}</div>
+        <button class="btn danger small x" data-del="${i}">✕</button>
+      </div>`}).join('')||'<div class="small muted" style="margin-bottom:8px">遺伝子未登録（ノーマル扱い）</div>';
+  };
+  drawRows();
+  rows.addEventListener('change',e=>{const r=e.target.closest('.grow-row');if(!r)return;const g=a.genes[+r.dataset.i];const k=e.target.dataset.k;g[k]=k==='p'?+e.target.value:e.target.value;if(k==='s'&&g.s==='phet'&&!g.p)g.p=50;drawRows()});
+  rows.addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d){a.genes.splice(+d.dataset.del,1);drawRows()}});
+  const sync=()=>{a.name=$('#fName').value;a.species=$('#fSp').value;a.sex=$('#fSx').value;a.year=$('#fYr').value;a.line=$('#fLine').value;a.sireId=$('#fSire').value||null;a.damId=$('#fDam').value||null;a.memo=$('#fMemo').value};
+  $('#addGene').onclick=()=>{if(!S.morphs.length){toast('先にモルフをマスタに登録してください');return}const used=new Set(a.genes.map(g=>g.m));const m=S.morphs.find(x=>!used.has(x.id))||S.morphs[0];a.genes.push({m:m.id,s:m.mode==='rec'?'het':'vis'});drawRows()};
+  $('#quickMorph').onclick=()=>{sync();morphForm(null,()=>animalForm(id,a))};
+  $('#fSave').onclick=()=>{
+    sync();
+    if(!a.name.trim()){toast('名前を入力してください');return}
+    const seen=new Set();a.genes=a.genes.filter(g=>{if(seen.has(g.m))return false;seen.add(g.m);return true});
+    if(id){Object.assign(animal(id),a)}else{a.id=uid('a');a.code=nextCode();S.animals.push(a)}
+    save();closeModal();renderAnimals();renderSim();toast(id?'更新しました':'登録しました');
+  };
+}
+/* ================= TAB1: master ================= */
+function renderMorphs(){
+  $('#morphList').innerHTML=S.morphs.length?S.morphs.map(m=>{
+    const used=S.animals.filter(a=>a.genes.some(g=>g.m===m.id)).length;
+    return `<div class="mrow ${m.caution?'flag':''}" data-id="${m.id}">
+      <span class="mn">${esc(m.name)}</span>
+      <span class="tag mode" ${CALC(m.mode)?'':'style="color:var(--yellow);border-color:var(--yellow)"'}>${MODES[m.mode]}</span>
+      ${m.caution?'<span class="tag flag">⚠ 注意フラグ</span>':''}
+      ${m.sample?'<span class="tag sample">サンプル</span>':''}
+      <span class="mnote">${esc(m.note||'')}</span>
+      <span class="small muted mono">使用 ${used}</span>
+    </div>`}).join(''):'<div class="empty">モルフが未登録です</div>';
+  renderStats();
+}
+$('#morphList').addEventListener('click',e=>{const r=e.target.closest('.mrow');if(r)morphForm(r.dataset.id)});
+$('#btnNewMorph').onclick=()=>morphForm();
+function morphForm(id,after){
+  const m=id?{...morph(id)}:{name:'',mode:'unknown',src:'',note:'',caution:false,sample:false};
+  openModal(`<div class="panel-h"><span class="tick"></span><h2>GENE<span class="ja">${id?'モルフを編集':'モルフを追加'}</span></h2></div>
+    <div class="row"><div><label class="f">モルフ名 *</label><input type="text" id="mName" value="${esc(m.name)}"></div>
+      <div><label class="f">遺伝形式</label><select id="mMode">${Object.entries(MODES).map(([k,v])=>`<option value="${k}" ${k===m.mode?'selected':''}>${v}</option>`).join('')}</select></div></div>
+    <label class="f">出典</label><input type="text" id="mSrc" value="${esc(m.src||'')}" placeholder="遺伝形式の根拠（サイト名・URLなど）" style="margin-bottom:12px">
+    <label class="f">注意メモ</label><textarea id="mNote" placeholder="例：組み合わせに関する注意点、情報の出典など">${esc(m.note||'')}</textarea>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px">
+      <label class="chk"><input type="checkbox" id="mFlag" ${m.caution?'checked':''}>注意フラグ（他の注意フラグ付きモルフとの組み合わせ・ホモ化で警告）</label>
+      <label class="chk"><input type="checkbox" id="mSample" ${m.sample?'checked':''}>サンプル表示</label>
+    </div>
+    <p class="small muted">未確認・ポリジェニック／ライン：個体には登録できますが、子の確率計算には使いません。劣性：ビジュアル＝ホモ、ヘテロ＝保因。共優性・不完全優性：1コピー＝ヘテロ体、2コピー＝スーパー体として区別。優性：1コピーでビジュアル、2コピーは「ホモ」と表示。</p>
+    <div class="btns">${id?'<button class="btn danger" id="mDel">削除</button>':''}<button class="btn" id="mCancel">キャンセル</button><button class="btn primary" id="mSave">保存</button></div>`);
+  $('#mCancel').onclick=()=>{closeModal();after&&after()};
+  $('#mSave').onclick=()=>{
+    const name=$('#mName').value.trim();if(!name){toast('モルフ名を入力してください');return}
+    if(S.morphs.some(x=>x.name===name&&x.id!==id)){toast('同じ名前のモルフがあります');return}
+    const v={name,mode:$('#mMode').value,src:$('#mSrc').value,note:$('#mNote').value,caution:$('#mFlag').checked,sample:$('#mSample').checked};
+    if(id){
+      const old=morph(id);
+      if(old.mode!==v.mode){S.animals.forEach(a=>a.genes.forEach(g=>{if(g.m!==id)return;if(v.mode==='rec'&&g.s==='super')g.s='vis';else if(old.mode==='rec'&&v.mode!=='rec'&&g.s==='het')g.s='vis'}))}
+      Object.assign(old,v);
+    }else S.morphs.push({id:uid('m'),...v});
+    save();closeModal();renderMorphs();renderAnimals();renderSim();toast('保存しました');after&&after();
+  };
+  if(id)$('#mDel').onclick=()=>{
+    const used=S.animals.filter(a=>a.genes.some(g=>g.m===id)).length;
+    confirmBox(`「${esc(m.name)}」を削除しますか？${used?`<br><span class="small" style="color:var(--orange)">${used}個体に登録されています。それらの個体からもこの遺伝子が外れます。</span>`:''}`,'削除する',()=>{
+      S.morphs=S.morphs.filter(x=>x.id!==id);S.animals.forEach(a=>a.genes=a.genes.filter(g=>g.m!==id));save();renderMorphs();renderAnimals();toast('削除しました')});
+  };
+}
+
+/* ================= TAB1: data ================= */
+$('#btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify({app:'aojita-breed-sim',version:1,exportedAt:new Date().toISOString(),data:S},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='aojita-breed-sim-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+};
+$('#btnImport').onclick=()=>$('#fileImport').click();
+$('#fileImport').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result);const d=j.data||j;if(!d.morphs||!d.animals)throw 0;
+    confirmBox('現在のデータを読み込んだデータで置き換えますか？','置き換える',()=>{S=Object.assign(blank(),d,{init:true});save();renderAll();toast('読み込みました')})}catch(x){toast('読み込めないファイルです')}};
+  r.readAsText(f);e.target.value='';
+};
+$('#btnLoadSample').onclick=()=>{addSamples();save();renderAll();toast('サンプルを追加しました')};
+$('#btnDelSample').onclick=()=>confirmBox('「サンプル」と付いた個体とモルフを削除しますか？<br><span class="small muted">サンプル表示を外したものは残ります。</span>','削除する',()=>{
+  const ids=new Set(S.animals.filter(a=>a.sample).map(a=>a.id));const mids=new Set(S.morphs.filter(m=>m.sample).map(m=>m.id));
+  S.animals=S.animals.filter(a=>!ids.has(a.id));S.animals.forEach(a=>{if(ids.has(a.sireId))a.sireId=null;if(ids.has(a.damId))a.damId=null;a.genes=a.genes.filter(g=>!mids.has(g.m))});
+  S.morphs=S.morphs.filter(m=>!mids.has(m.id));['sire','dam'].forEach(k=>{if(ids.has(S.slots[k]))S.slots[k]=null});save();renderAll();toast('サンプルを削除しました')});
+$('#btnReset').onclick=()=>confirmBox('すべての個体・モルフを削除して初期状態に戻しますか？<br><span class="small" style="color:var(--orange)">元に戻せません。必要なら先にJSONを書き出してください。</span>','初期化する',()=>{S=blank();S.init=true;save();renderAll();toast('初期化しました')});
+
+/* ================= TAB2 ================= */
+let lastRun=null;
+function setSlot(k,id){
+  const other=k==='sire'?'dam':'sire';
+  if(S.slots[other]===id){S.slots[other]=null}
+  S.slots[k]=id;lastRun=null;save();renderSim();
+  const a=animal(id);
+  if(a&&((k==='sire'&&a.sex==='F')||(k==='dam'&&a.sex==='M')))toast(`${a.name} は${SEX[a.sex]}ですが${k==='sire'?'父':'母'}スロットにセットしました`);
+}
+function autoSet(id){
+  const a=animal(id);if(!a)return;
+  if(S.slots.sire===id||S.slots.dam===id){toast('すでにセット済みです');return}
+  let k=a.sex==='M'?'sire':a.sex==='F'?'dam':(!S.slots.sire?'sire':'dam');
+  setSlot(k,id);toast(`${a.name} を${k==='sire'?'父':'母'}スロットにセット`);
+}
+function renderSlots(){
+  ['sire','dam'].forEach(k=>{
+    const el=$(k==='sire'?'#slotSire':'#slotDam');const a=animal(S.slots[k]);
+    if(!a&&S.slots[k])S.slots[k]=null;
+    el.classList.toggle('filled',!!a);
+    el.querySelector('.slot-b').innerHTML=a?holoCard(a):`<div class="ph"><svg viewBox="0 0 100 100"><g fill="none" stroke="#3ff3ff"><circle cx="50" cy="50" r="44" stroke-dasharray="4 6"/><path d="M50 30v40M30 50h40" stroke-width="2"/></g></svg>${k==='sire'?'父':'母'}個体をセット<br><span class="small">タップで選択／ドラッグ</span></div>`;
+  });
+  const on=!!(animal(S.slots.sire)&&animal(S.slots.dam));
+  $('#reactor').classList.toggle('on',on);$('#reactorSt').textContent=on?'LINK ESTABLISHED':'STANDBY';
+  $('#btnRun').disabled=!on;
+}
+function renderDock(){
+  $('#dock').innerHTML=S.animals.length?S.animals.map(a=>`<div class="mini ${S.slots.sire===a.id||S.slots.dam===a.id?'inuse':''}" data-id="${a.id}">
+    <span class="sx ${a.sex}">${SEXSYM[a.sex]}</span><div class="nm">${esc(a.name)}</div><div class="g">${esc(animalVisualName(a))}</div><div class="g muted">${esc(a.code)}</div></div>`).join(''):'<div class="empty" style="flex:1">TAB1で個体を登録してください</div>';
+}
+$$('.clr').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();S.slots[b.dataset.clear]=null;lastRun=null;save();renderSim()}));
+$$('.slot').forEach(s=>s.addEventListener('click',e=>{if(e.target.closest('.clr'))return;pickerFor(s.dataset.slot)}));
+function pickerFor(k){
+  const pref=k==='sire'?'M':'F';
+  const list=[...S.animals].sort((a,b)=>(b.sex===pref)-(a.sex===pref));
+  openModal(`<div class="panel-h"><span class="tick"></span><h2>SELECT<span class="ja">${k==='sire'?'父':'母'}個体を選択</span></h2></div>
+    <div class="cards" id="pickCards">${list.map(a=>holoCard(a)).join('')||'<div class="empty">個体がありません</div>'}</div>`);
+  $('#pickCards').onclick=e=>{const c=e.target.closest('.holo');if(c){setSlot(k,c.dataset.id);closeModal()}};
+}
+
+/* ---- drag & drop (mouse + touch long-press) ---- */
+(function dnd(){
+  const dock=$('#dock');let st=null,ghost=null,suppress=false;
+  const slotAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest('.slot')};
+  const begin=(card,x,y)=>{
+    ghost=card.cloneNode(true);ghost.classList.add('ghost','mini');document.body.appendChild(ghost);card.classList.add('lifted');move(x,y);if(navigator.vibrate)navigator.vibrate(15);
+  };
+  const move=(x,y)=>{if(!ghost)return;ghost.style.left=x+'px';ghost.style.top=y+'px';$$('.slot').forEach(s=>s.classList.remove('over'));const s=slotAt(x,y);if(s)s.classList.add('over')};
+  const end=(x,y)=>{
+    if(ghost){const s=slotAt(x,y);const id=st.card.dataset.id;ghost.remove();ghost=null;st.card.classList.remove('lifted');$$('.slot').forEach(s=>s.classList.remove('over'));
+      if(s){setSlot(s.dataset.slot,id);const a=animal(id);toast(`${a.name} を${s.dataset.slot==='sire'?'父':'母'}スロットにセット`)}
+      suppress=true;setTimeout(()=>suppress=false,350);}
+    clearTimeout(st&&st.timer);st=null;
+  };
+  // mouse
+  dock.addEventListener('mousedown',e=>{const c=e.target.closest('.mini');if(!c||e.button!==0)return;st={card:c,x:e.clientX,y:e.clientY,mouse:true};e.preventDefault()});
+  window.addEventListener('mousemove',e=>{if(!st||!st.mouse)return;if(!ghost&&Math.hypot(e.clientX-st.x,e.clientY-st.y)>6)begin(st.card,e.clientX,e.clientY);move(e.clientX,e.clientY)});
+  window.addEventListener('mouseup',e=>{if(st&&st.mouse)end(e.clientX,e.clientY)});
+  // touch
+  dock.addEventListener('touchstart',e=>{const c=e.target.closest('.mini');if(!c)return;const t=e.touches[0];
+    st={card:c,x:t.clientX,y:t.clientY,lx:t.clientX,ly:t.clientY,moved:false};
+    st.timer=setTimeout(()=>{if(st&&!st.moved)begin(c,st.lx,st.ly)},280)},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!st||st.mouse)return;const t=e.touches[0];st.lx=t.clientX;st.ly=t.clientY;
+    if(ghost){e.preventDefault();move(t.clientX,t.clientY)}else if(Math.hypot(t.clientX-st.x,t.clientY-st.y)>10){st.moved=true;clearTimeout(st.timer)}},{passive:false});
+  document.addEventListener('touchend',()=>{if(st&&!st.mouse)end(st.lx,st.ly)});
+  document.addEventListener('touchcancel',()=>{if(ghost){ghost.remove();ghost=null}if(st){st.card.classList.remove('lifted');clearTimeout(st.timer)}st=null;$$('.slot').forEach(s=>s.classList.remove('over'))});
+  dock.addEventListener('contextmenu',e=>{if(e.target.closest('.mini'))e.preventDefault()});
+  dock.addEventListener('click',e=>{if(suppress)return;const c=e.target.closest('.mini');if(c)autoSet(c.dataset.id)});
+})();
+
+/* ---- pair analysis panel ---- */
+function renderPairInfo(){
+  const sire=animal(S.slots.sire),dam=animal(S.slots.dam);const box=$('#pairInfo');
+  if(!sire||!dam){box.innerHTML='';return}
+  const ib=inbreeding(sire,dam);
+  let lv=level(ib.F);
+  const lvOrder=['lv-safe','lv-caution','lv-warn','lv-danger'];
+  if(ib.line&&lvOrder.indexOf(lv.cls)<1)lv={cls:'lv-caution',en:'CAUTION',ja:'注意'};
+  const reasons=[];
+  ib.items.forEach(it=>{const a=animal(it.anc);reasons.push(`共通祖先 <b>${esc(a.code)} ${esc(a.name)}</b>：${it.rel.map(r=>`${relName(r.n1,r.n2)}（父側${r.n1}世代・母側${r.n2}世代）`).join('／')} → 寄与 ${pct(it.c,2)}`)});
+  if(ib.line)reasons.push(`血統ライン名が両親で一致：<b>「${esc(sire.line.trim())}」</b>`);
+  if(!reasons.length)reasons.push('登録された血統リンク内に共通祖先は見つかりませんでした。');
+  const sexNote=[];if(sire.sex==='F')sexNote.push('父スロットの個体がメスとして登録されています。');if(dam.sex==='M')sexNote.push('母スロットの個体がオスとして登録されています。');
+  if(sire.species!==dam.species)sexNote.push(`種類が異なります（${esc(sire.species)} × ${esc(dam.species)}）。`);
+  const F=Math.min(ib.F,1);const circ=2*Math.PI*36;
+  // genes
+  const an=analyze(sire,dam);const th=theory(an);
+  const excl=excluded(sire,dam);
+  const flagged=th.map(c=>({c,f:flaggedIn(c.list)})).filter(x=>x.f.hit);
+  const flagP=flagged.reduce((s,x)=>s+x.c.p,0);
+  const flaggedMorphs=[...new Set(flagged.flatMap(x=>[...x.f.names,...x.f.homo]))].map(n=>S.morphs.find(m=>m.name===n)).filter(Boolean);
+
+  box.innerHTML=`
+  <div class="panel alert ${lv.cls}">
+    <div class="panel-h"><span class="tick" style="background:var(--lc);box-shadow:0 0 8px var(--lc)"></span><h2 style="color:var(--lc)">INBREEDING SCAN<span class="ja">近親交配チェック</span></h2></div>
+    <div class="lvl">
+      <svg class="gauge" viewBox="0 0 84 84"><circle cx="42" cy="42" r="36" fill="none" stroke="rgba(63,243,255,.15)" stroke-width="6"/>
+        <circle cx="42" cy="42" r="36" fill="none" stroke="var(--lc)" stroke-width="6" stroke-dasharray="${circ*Math.min(F/.25,1)} ${circ}" transform="rotate(-90 42 42)" style="filter:drop-shadow(0 0 4px var(--lc))"/>
+        <g class="spin-f"><circle cx="42" cy="42" r="28" fill="none" stroke="var(--lc)" stroke-width="1" stroke-dasharray="2 4" opacity=".6"/></g></svg>
+      <div><div class="lvl-name">${lv.en}</div><div class="lvl-ja">${lv.ja}</div></div>
+      <div style="margin-left:auto;text-align:right"><div class="small muted en">COEFFICIENT F</div><div class="fval">${ib.same?'—':pct(ib.F,2)}</div></div>
+    </div>
+    <ul>${ib.same?'<li>同じ個体が両方のスロットにセットされています。</li>':reasons.map(r=>`<li>${r}</li>`).join('')}</ul>
+    ${sexNote.length?`<div class="note">${sexNote.join('<br>')}</div>`:''}
+    <div class="small muted" style="margin-top:8px">基準：3%未満 安全／3〜6.25%未満 注意／6.25〜12.5%未満 警告／12.5%以上 危険（親子・全兄弟 25%、半兄弟 12.5%、おじおば×姪甥 12.5%、いとこ 6.25%）</div>
+  </div>
+  ${flagged.length?`<div class="panel cautionp">
+    <div class="panel-h"><span class="tick" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span><h2>MORPH CAUTION<span class="ja">注意フラグ付きモルフの組み合わせ</span></h2></div>
+    <p style="margin:0 0 8px">注意フラグ付きモルフ同士の組み合わせ（またはホモ化）が子に出る可能性があります：理論上 <b style="color:var(--orange)">${pct(flagP,2)}</b></p>
+    <ul style="margin:0;padding-left:18px;font-size:13px">${flagged.slice(0,8).map(x=>`<li>${esc(x.c.name)}（${pct(x.c.p,2)}）</li>`).join('')}${flagged.length>8?`<li>ほか${flagged.length-8}パターン</li>`:''}</ul>
+    ${flaggedMorphs.map(m=>m.note?`<div class="note" style="color:var(--orange);border-color:var(--orange)">${esc(m.name)}：${esc(m.note)}</div>`:'').join('')}
+  </div>`:''}
+  <div class="panel">
+    <div class="panel-h"><span class="tick"></span><h2>GENE MATRIX<span class="ja">遺伝子ごとの分離比（パネットスクエア）</span></h2></div>
+    ${an.length?`<div class="gene-list">${an.map(geneBox).join('')}</div>`:'<div class="muted small">計算できる遺伝子（劣性・優性・共優性・不完全優性）が両親に登録されていません。</div>'}
+    ${excl.length?`<div class="note">計算対象外（遺伝形式が未確認／ポリジェニック）：${excl.map(x=>`${esc(x.name)}［${x.who}・${MODES[x.mode]}］`).join('、')}<br>遺伝子マスタで遺伝形式を設定すると計算に入ります。</div>`:''}
+  </div>`;
+}
+function excluded(sire,dam){
+  const out=[];
+  [[sire,'父'],[dam,'母']].forEach(([a,who])=>a.genes.forEach(g=>{const m=morph(g.m);if(!m||CALC(m.mode)||g.s==='normal')return;const e=out.find(x=>x.id===m.id);if(e){if(!e.who.includes(who))e.who+='・'+who}else out.push({id:m.id,name:m.name,mode:m.mode,who})}));
+  return out;
+}
+function parentLabel(g,mode){
+  if(!g||g.s==='normal')return 'ノーマル ('+genoStr(mode,0)+')';
+  if(g.s==='phet')return `${g.p||50}%ポッシブル (${genoStr(mode,1)} or ${genoStr(mode,0)})`;
+  const k=mode==='rec'?(g.s==='vis'?2:1):(g.s==='super'?2:1);
+  return stateOf(mode,k)[1]+' ('+genoStr(mode,k)+')';
+}
+function geneBox(g){
+  const a=g.mode==='rec'?'m':'M';
+  const definite=x=>!x||x.s!=='phet';
+  let pun='';
+  if(definite(g.gs)&&definite(g.gd)){
+    const k=d=>d[2]?2:d[1]?1:0;const gam=kk=>kk===2?[a,a]:kk===1?['+',a]:['+','+'];
+    const s=gam(k(g.ds)),d=gam(k(g.dd));
+    const cell=(x,y)=>{const n=(x===a)+(y===a);return `<td style="color:${n===2?'var(--pink)':n===1?'var(--cyan)':'var(--muted)'}">${n===2?a+'/'+a:n===1?'+/'+a:'+/+'}</td>`};
+    pun=`<table class="pun"><tr><th>父＼母</th><th>${d[0]}</th><th>${d[1]}</th></tr>${s.map(x=>`<tr><th>${x}</th>${cell(x,d[0])}${cell(x,d[1])}</tr>`).join('')}</table>`;
+  }
+  const bars=[2,1,0].filter(k=>g.dist[k]>0).map(k=>`<div class="bar"><span class="lab">${stateOf(g.mode,k)[1]}</span><span class="trk"><i style="width:${g.dist[k]*100}%"></i></span><span class="pc">${pct(g.dist[k],1)}</span></div>`).join('');
+  const ph=[g.gs,g.gd].some(x=>x&&x.s==='phet');
+  return `<div class="gbox"><h3>${esc(g.m.name)} <span class="tag mode">${MODES[g.mode]}</span>${g.m.caution?'<span class="tag flag">⚠</span>':''}${g.m.sample?'<span class="tag sample">サンプル</span>':''}</h3>
+    <div class="pp">父：${parentLabel(g.gs,g.mode)}<br>母：${parentLabel(g.gd,g.mode)}</div>${pun}${bars}
+    ${ph?`<div class="note">ポッシブル個体を含むため、理論確率は「保持している確率」で重み付けした期待値です。実際の抽選では、毎回の実行ごとに保持の有無を確率で仮定してから子を抽選します。</div>`:''}</div>`;
+}
+
+/* ---- run ---- */
+function updateSeg(){$$('#segCount button').forEach(b=>b.classList.toggle('on',+b.dataset.n===S.count))}
+$('#segCount').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.count=+b.dataset.n;save();updateSeg()};
+$('#btnRun').onclick=()=>run();
+$('#btnReroll').onclick=()=>run();
+function run(){
+  const sire=animal(S.slots.sire),dam=animal(S.slots.dam);if(!sire||!dam){toast('父と母をセットしてください');return}
+  if(sire.id===dam.id){toast('同じ個体同士は交配できません');return}
+  const an=analyze(sire,dam);const th=theory(an);
+  // ポッシブルの仮定（今回の実行）
+  const assume=[];
+  const runGenes=an.map(g=>{
+    let ds=g.ds,dd=g.dd;
+    [['父',g.gs,'s'],['母',g.gd,'d']].forEach(([who,pg,w])=>{
+      if(pg&&pg.s==='phet'){const p=(+pg.p||50)/100;const has=Math.random()<p;assume.push(`${who}の ${g.m.name}（${pg.p||50}%ポッシブル）は今回「${has?'保持している':'保持していない'}」と仮定`);
+        const nd=has?{0:0,1:1,2:0}:{0:1,1:0,2:0};if(w==='s')ds=nd;else dd=nd}
+    });
+    return {...g,rdist:childDist(ds,dd)};
+  });
+  const kids=[];
+  for(let i=0;i<S.count;i++){
+    const list=runGenes.map(g=>({mid:g.mid,mode:g.mode,k:pick(g.rdist)}));
+    kids.push({list,name:comboName(list),sex:Math.random()<.5?'M':'F',flag:flaggedIn(list).hit});
+  }
+  lastRun={kids,th,assume,excl:excluded(sire,dam),at:new Date()};
+  renderRun(true);
+}
+function renderRun(animate){
+  const r=lastRun;
+  $('#btnReroll').disabled=!r;
+  if(!r){$('#kidsPanel').style.display='none';$('#sumPanel').style.display='none';$('#runNote').innerHTML='';return}
+  $('#runNote').innerHTML=r.assume.length?`<div class="note" style="margin-top:12px">${r.assume.map(esc).join('<br>')}</div>`:'';
+  $('#kidsPanel').style.display='';$('#sumPanel').style.display='';
+  $('#runId').textContent='RUN '+r.at.toTimeString().slice(0,8)+' ／ '+r.kids.length+' SPECIMENS';
+  const k=$('#kids');
+  k.innerHTML=r.kids.map((c,i)=>`<div class="holo kid ${c.flag?'flagged':''}" style="${animate?`animation-delay:${i*0.14}s,${i*0.14+.8}s`:'animation:none'}">
+    <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+    <div class="sex ${c.sex}">${SEXSYM[c.sex]}</div>
+    <div class="no">OFFSPRING #${String(i+1).padStart(2,'0')}</div>
+    <div class="combo">${esc(c.name)}</div>
+    ${c.list.map(g=>{const [cls,lab]=stateOf(g.mode,g.k);return `<div class="gl"><span>${esc(morph(g.mid)?.name)}</span><span class="tag ${cls==='vis'?'vis':cls==='super'?'super':cls==='het'?'het':'normal'}" style="margin:0">${lab}</span></div>`}).join('')}
+    ${r.excl&&r.excl.length?`<div class="small" style="color:var(--yellow);margin-top:4px">計算外：${r.excl.map(x=>esc(x.name)).join('、')}</div>`:''}
+    ${c.flag?'<div class="small" style="color:var(--orange);margin-top:4px">⚠ 注意フラグの組み合わせ</div>':''}
+    <div class="small muted" style="margin-top:4px">${SEX[c.sex]}</div>
+  </div>`).join('');
+  if(animate)setTimeout(()=>$('#kidsPanel').scrollIntoView({behavior:'smooth',block:'start'}),60);
+  // summary
+  const counts=new Map();r.kids.forEach(c=>counts.set(c.name,(counts.get(c.name)||0)+1));
+  const rows=r.th.map(t=>({name:t.name,p:t.p,n:counts.get(t.name)||0,flag:flaggedIn(t.list).hit}));
+  counts.forEach((n,name)=>{if(!rows.some(x=>x.name===name))rows.push({name,p:0,n,flag:false})});
+  rows.sort((a,b)=>b.n-a.n||b.p-a.p);
+  const shown=rows.filter(x=>x.n>0||x.p>=0.001).slice(0,60);
+  const N=r.kids.length;const males=r.kids.filter(c=>c.sex==='M').length;
+  $('#sumTable').innerHTML=`<tr><th>MORPH ／ モルフ</th><th style="text-align:right">COUNT</th><th style="text-align:right">今回</th><th style="text-align:right">理論</th><th style="width:28%"></th></tr>`+
+    shown.map(x=>`<tr class="${x.n?'':'zero'}"><td>${x.flag?'<span style="color:var(--orange)">⚠ </span>':''}${esc(x.name)}</td><td class="n">${x.n} / ${N}</td><td class="n">${pct(x.n/N,1)}</td><td class="n">${pct(x.p,2)}</td>
+      <td><div class="mbar"><i style="width:${x.n/N*100}%"></i><b style="left:calc(${Math.min(x.p*100,100)}% - 1px)"></b></div></td></tr>`).join('')+
+    `<tr><td class="muted">性別</td><td class="n" colspan="4" style="text-align:left">オス ${males} ／ メス ${N-males}（各50%で抽選）</td></tr>`+
+    (rows.length>shown.length?`<tr><td colspan="5" class="muted small">理論確率0.1%未満で今回出現しなかった ${rows.length-shown.length} パターンは省略</td></tr>`:'');
+}
+
+function renderSim(){renderSlots();renderDock();renderPairInfo();updateSeg();renderRun(false)}
+function renderAll(){renderAnimals();renderMorphs();renderSim()}
+
+
+/* clock */
+setInterval(()=>{const d=new Date();$('#clock').textContent=d.toTimeString().slice(0,5)},1000);$('#clock').textContent=new Date().toTimeString().slice(0,5);
+
+renderAll();
+})();
+</script>
+</body>
+</html>
